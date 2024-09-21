@@ -1,15 +1,21 @@
-const express = require("express");
-const {
-  getTasks,
-  addTask,
-  updateTask,
-  deleteTask,
-} = require("../controllers/taskController");
+import express from "express";
+import { 
+  getTasks, 
+  addTask, 
+  updateTask, 
+  deleteTask, 
+  importTasksFromCSV, 
+  exportTasksToCSV, 
+  upload 
+} from "../controllers/taskController.js";
+
 const router = express.Router();
 
-router.get("/tasks", getTasks);
-router.post("/tasks", addTask);
-router.put("/tasks/:id", updateTask);
-router.delete("/tasks/:id", deleteTask);
+router.get("/", getTasks);
+router.post("/", addTask);
+router.put("/:id", updateTask);
+router.delete("/:id", deleteTask);
+router.post("/import", upload.single("file"), importTasksFromCSV);
+router.get("/export", exportTasksToCSV);
 
-module.exports = router;
+export default router;

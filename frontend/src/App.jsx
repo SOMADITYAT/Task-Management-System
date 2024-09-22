@@ -1,16 +1,19 @@
-import React from "react";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import Home from "./pages/Home";
-// import NotFound from "./pages/NotFound";
+import React, { useState } from "react";
+import TaskList from "./components/TaskList";
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+
+
 
 const App = () => {
+  const [currentTask, setCurrentTask] = useState(null);
+
   return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<Home />} />
-        {/* <Route path="*" element={<NotFound />} /> */}
-      </Routes>
-    </Router>
+    <div className="container mx-auto p-4">
+     
+      <TaskList onEdit={(task) => setCurrentTask(task)} />
+      <ToastContainer />
+    </div>
   );
 };
 

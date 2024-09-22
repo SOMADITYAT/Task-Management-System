@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { getTasks, deleteTask, updateTask } from "../api/api";
 import TaskList from "../components/TaskList";
-import TaskForm from "../components/TaskForm";
+import TaskForm from "../components/TaskAdd";
 import TaskImport from "../components/TaskImport";
 
 const Home = () => {

@@ -1,21 +1,18 @@
 import express from "express";
-import { 
-  getTasks, 
-  addTask, 
-  updateTask, 
-  deleteTask, 
-  importTasksFromCSV, 
-  exportTasksToCSV, 
-  upload 
+import {
+  getTasks,
+  addTask,
+  updateTask,
+  deleteTask,
+  exportTasks,
 } from "../controllers/taskController.js";
 
 const router = express.Router();
 
-router.get("/", getTasks);
-router.post("/", addTask);
-router.put("/:id", updateTask);
-router.delete("/:id", deleteTask);
-router.post("/import", upload.single("file"), importTasksFromCSV);
-router.get("/export", exportTasksToCSV);
+router.get("/tasks", getTasks);
+router.post("/tasks", addTask);
+router.put("/tasks/:id", updateTask);
+router.delete("/tasks/:id", deleteTask);
+router.get("/export", exportTasks);
 
 export default router;

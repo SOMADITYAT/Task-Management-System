@@ -40,3 +40,19 @@ export const exportTasks = async () => {
   document.body.appendChild(link);
   link.click();
 };
+export const importTasks = async (formData) => {
+  try {
+    const response = await axios.post(`${API_URL}/import`, formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error(
+      "Error importing tasks:",
+      error.response?.data || error.message
+    );
+    throw error;
+  }
+};

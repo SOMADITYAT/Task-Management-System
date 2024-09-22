@@ -27,17 +27,15 @@ const AddTask = ({ onTaskAdded, existingTasks }) => {
     );
     if (isDuplicate) {
       setError("Task with this title already exists.");
-      toast.error("Task with this title already exists."); // Show error toast
+      toast.error("Task with this title already exists.");
       return;
     }
 
-    // Validate: Check that the due date is not in the past
     const dueDate = new Date(taskData.endDate);
     const today = new Date();
     if (dueDate < today) {
       setError("Due date cannot be in the past.");
-      toast.error("Due date cannot be in the past."); // Show error toast
-      return;
+      toast.error("Due date cannot be in the past."); 
     }
 
     try {
@@ -51,10 +49,10 @@ const AddTask = ({ onTaskAdded, existingTasks }) => {
         status: "Pending",
         assignment: "",
       });
-      toast.success("Task added successfully!"); // Show success toast
+      toast.success("Task added successfully!"); 
     } catch (err) {
       setError("Failed to create task. Please try again.");
-      toast.error("Failed to create task. Please try again."); // Show error toast
+      toast.error("Failed to create task. Please try again."); 
     }
   };
   return (

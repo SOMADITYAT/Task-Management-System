@@ -1,10 +1,10 @@
-import mongoose from "mongoose";
+import mongoose, { get } from "mongoose";
 
 const taskSchema = new mongoose.Schema(
   {
     task: { type: String, required: true },
     description: { type: String },
-    endDate: { type: Date },
+    endDate: { type: Date, get: (date) => date.toISOString().split("T")[0] },
     priority: { type: String, enum: ["Low", "Medium", "High"], default: "Low" },
     status: {
       type: String,

@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from "react";
-import { fetchTasks, deleteTask, exportTasks } from "../api/api";
+import { fetchTasks, deleteTask, exportTasks, importTasks } from "../api/api";
 import Modal from "./Modal";
 import AddTask from "./AddTask";
 import EditTask from "./EditTask";
+import ReactPaginate from "react-paginate"; // Import react-paginate
 import { FaArrowLeft, FaArrowRight } from "react-icons/fa";
 
 const TASKS_PER_PAGE = 10;
@@ -19,7 +20,10 @@ const TaskList = () => {
     dueDate: "",
     assignee: "",
   });
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState(0); // Change to 0 for zero-based index
+  const [csvFile, setCsvFile] = useState(null);
+  const [error, setError] = useState(null);
+  const [fileError, setFileError] = useState("");
 
   useEffect(() => {
     const loadTasks = async () => {
@@ -59,6 +63,34 @@ const TaskList = () => {
     await exportTasks();
   };
 
+  const handleFileChange = (event) => {
+    setCsvFile(event.target.files[0]);
+  };
+
+  const handleImport = async (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        setFileError("File size exceeds 5MB.");
+        setSelectedFile(null);
+        return;
+      }
+      setSelectedFile(file);
+      setFileError("");
+      const formData = new FormData();
+      formData.append("file", file);
+
+      try {
+        const response = await importTasks(formData);
+        console.log(response.message);
+        const tasksData = await fetchTasks(); // Reload tasks after import
+        setTasks(tasksData);
+      } catch (error) {
+        console.error("Error importing tasks:", error);
+      }
+    }
+  };
+
   const filteredTasks = tasks.filter((task) => {
     const matchesSearch =
       task.task.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -90,13 +122,18 @@ const TaskList = () => {
 
   const totalPages = Math.ceil(sortedTasks.length / TASKS_PER_PAGE);
   const displayedTasks = sortedTasks.slice(
-    (currentPage - 1) * TASKS_PER_PAGE,
-    currentPage * TASKS_PER_PAGE
+    currentPage * TASKS_PER_PAGE,
+    (currentPage + 1) * TASKS_PER_PAGE
   );
+
+  const handlePageChange = (data) => {
+    setCurrentPage(data.selected); // Update the current page
+  };
 
   return (
     <div className="w-100">
       <h2 className="text-2xl mb-4">Task Manager</h2>
+      {error && <p className="text-red-500">{error}</p>}
       <div className="flex flex-col md:flex-row md:justify-between items-center w-full p-4">
         <input
           type="text"
@@ -164,7 +201,7 @@ const TaskList = () => {
         />
       </Modal>
 
-      <div className="w-4xl mx-auto bg-white  rounded-lg overflow-hidden p-4">
+      <div className="w-4xl mx-auto bg-white rounded-lg overflow-hidden p-4">
         <div className="overflow-x-auto shadow-lg rounded-lg">
           <table className="min-w-full bg-white divide-y divide-gray-200">
             <thead className="bg-gray-100">
@@ -197,90 +234,72 @@ const TaskList = () => {
             </thead>
             <tbody className="divide-y divide-gray-200">
               {displayedTasks.map((task, index) => (
-                <tr
-                  key={task._id}
-                  className="hover:bg-gray-50 transition duration-200"
-                >
-                  <td className="px-4 py-4">
-                    {(currentPage - 1) * TASKS_PER_PAGE + index + 1}
+                <tr key={task._id}>
+                  <td className="px-4 py-3 text-gray-700">
+                    {index + 1 + currentPage * TASKS_PER_PAGE}
                   </td>
-                  <td className="px-4 py-4">{task.task}</td>
-                  <td className="px-4 py-4">{task.description}</td>
-                  <td className="px-4 py-4">{task.endDate}</td>
-                  <td className="px-4 py-4">
-                    <span
-                      className={`font-semibold ${
-                        task.priority === "High"
-                          ? "text-red-600"
-                          : task.priority === "Medium"
-                          ? "text-yellow-600"
-                          : "text-green-600"
-                      }`}
+                  <td className="px-4 py-3 text-gray-700">{task.task}</td>
+                  <td className="px-4 py-3 text-gray-700">
+                    {task.description}
+                  </td>
+                  <td className="px-4 py-3 text-gray-700">{task.endDate}</td>
+                  <td className="px-4 py-3 text-gray-700">{task.priority}</td>
+                  <td className="px-4 py-3 text-gray-700">{task.status}</td>
+                  <td className="px-4 py-3 text-gray-700">{task.assignment}</td>
+                  <td className="px-4 py-3">
+                    <button
+                      onClick={() => handleEditTask(task)}
+                      className="text-blue-500 hover:underline mr-2"
                     >
-                      {task.priority}
-                    </span>
-                  </td>
-                  <td className="px-4 py-4">
-                    <span
-                      className={`px-2 py-1 rounded-full text-xs font-semibold ${
-                        task.status === "Completed"
-                          ? "bg-green-200 text-green-800"
-                          : task.status === "Pending"
-                          ? "bg-yellow-200 text-yellow-800"
-                          : task.status === "In Progress"
-                          ? "bg-blue-200 text-blue-800"
-                          : "bg-red-200 text-red-800"
-                      }`}
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => handleDelete(task._id)}
+                      className="text-red-500 hover:underline"
                     >
-                      {task.status}
-                    </span>
-                  </td>
-                  <td className="px-4 py-4">{task.assignment}</td>
-                  <td className="px-4 py-4">
-                    <div className="flex items-center space-x-2">
-                      <button
-                        onClick={() => handleEditTask(task)}
-                        className="bg-yellow-500 text-white px-2 py-1 rounded hover:bg-yellow-600"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => handleDelete(task._id)}
-                        className="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600"
-                      >
-                        Delete
-                      </button>
-                    </div>
+                      Delete
+                    </button>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
-      </div>
 
-      <div className="flex justify-between items-center mt-4">
-        <button
-          onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-          disabled={currentPage === 1}
-          className="bg-gray-300 text-gray-700 px-4 py-2 rounded disabled:opacity-50 flex items-center"
-        >
-          <FaArrowLeft className="mr-2" />
-          Previous
-        </button>
-        <span className="self-center">
-          Page {currentPage} of {totalPages}
-        </span>
-        <button
-          onClick={() =>
-            setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+        {/* Pagination */}
+        <ReactPaginate
+          className="flex items-center text-center justify-center mt-4"
+          previousLabel={
+            <span className="flex items-center ">
+              <FaArrowLeft />
+            </span>
           }
-          disabled={currentPage === totalPages}
-          className="bg-gray-300 text-gray-700 px-4 py-2 rounded disabled:opacity-50 flex items-center"
-        >
-          Next
-          <FaArrowRight className="ml-2" />
-        </button>
+          nextLabel={
+            <span className="flex items-center">
+              <FaArrowRight />
+            </span>
+          }
+          breakLabel={"..."}
+          breakClassName={"mx-2"}
+          pageCount={totalPages}
+          marginPagesDisplayed={2}
+          pageRangeDisplayed={5}
+          onPageChange={handlePageChange}
+          containerClassName={"flex justify-center items-center mt-4"}
+          pageClassName={"mx-1"}
+          pageLinkClassName={
+            " rounded hover:bg-blue-500 hover:text-white transition"
+          }
+          previousClassName={"mx-1"}
+          previousLinkClassName={
+            " rounded hover:bg-blue-500 hover:text-white transition"
+          }
+          nextClassName={"mx-1"}
+          nextLinkClassName={
+            " rounded hover:bg-blue-500 hover:text-white transition"
+          }
+          activeClassName={"bg-blue-500 text-white"}
+        />
       </div>
     </div>
   );
